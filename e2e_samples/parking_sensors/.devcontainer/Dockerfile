@@ -23,6 +23,9 @@ RUN az extension add --name azure-devops
 # Install Databricks CLI
 RUN pip install databricks-cli
 
+#Install msrestazure 
+RUN pip install msrestazure 
+
 # Install jq
 RUN apt-get update \
     && apt-get -y install jq
