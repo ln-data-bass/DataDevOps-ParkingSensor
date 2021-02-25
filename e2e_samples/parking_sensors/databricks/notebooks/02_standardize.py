@@ -23,6 +23,51 @@ base_path = os.path.join('dbfs:/mnt/datalake/data/lnd/', infilefolder)
 parkingbay_filepath = os.path.join(base_path, "MelbParkingBayData.json")
 sensors_filepath = os.path.join(base_path, "MelbParkingSensorData.json")
 
+# COMMAND ----------
+from pyspark.sql import DataFrame
+from pyspark.sql.functions import lit, col, to_timestamp
+from pyspark.sql.types import (
+    ArrayType, StructType, StructField, StringType, DoubleType)  # noqa: E501
+
+def local_standardize_parking_bay(parkingbay_sdf: DataFrame, load_id, loaded_on):
+    t_parkingbay_sdf = (
+        parkingbay_sdf
+        .withColumn("last_edit", to_timestamp("last_edit", "MM-dd-yyyy HH:mm:ss. SSS"))
+        .select(
+            col("bay_id").cast("int").alias("bay_id"),
+            "last_edit",
+            "marker_id",
+            "meter_id",
+            "rd_seg_dsc",
+            col("rd_seg_id").cast("int").alias("rd_seg_id"),
+            "the_geom",
+            lit(load_id).alias("load_id"),
+            lit(loaded_on).alias("loaded_on")
+        )
+    ).cache()
+    # Data Validation
+    good_records = t_parkingbay_sdf.filter(col("bay_id").isNotNull())
+    bad_records = t_parkingbay_sdf.filter(col("bay_id").isNull())
+    return good_records, bad_records
+
+def local_standardize_sensordata(sensordata_sdf: DataFrame, load_id, loaded_on):
+    t_sensordata_sdf = (
+        sensordata_sdf
+        .select(
+            col("bay_id").cast("int").alias("bay_id"),
+            "st_marker_id",
+            col("lat").cast("float").alias("lat"),
+            col("lon").cast("float").alias("lon"),
+            "location",
+            "status",
+            lit(load_id).alias("load_id"),
+            lit(loaded_on).alias("loaded_on")
+        )
+    ).cache()
+    # Data Validation
+    good_records = t_sensordata_sdf.filter(col("bay_id").isNotNull())
+    bad_records = t_sensordata_sdf.filter(col("bay_id").isNull())
+    return good_records, bad_records
 
 # COMMAND ----------
 
@@ -46,8 +91,8 @@ sensordata_sdf = spark.read\
 
 
 # Standardize
-t_parkingbay_sdf, t_parkingbay_malformed_sdf = s.standardize_parking_bay(parkingbay_sdf, load_id, loaded_on)
-t_sensordata_sdf, t_sensordata_malformed_sdf = s.standardize_sensordata(sensordata_sdf, load_id, loaded_on)
+t_parkingbay_sdf, t_parkingbay_malformed_sdf = local_standardize_parking_bay(parkingbay_sdf, load_id, loaded_on)
+t_sensordata_sdf, t_sensordata_malformed_sdf = local_standardize_sensordata(sensordata_sdf, load_id, loaded_on)
 
 # Insert new rows
 t_parkingbay_sdf.write.mode("append").insertInto("interim.parking_bay")
