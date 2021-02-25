@@ -195,9 +195,9 @@ dimtime.write.saveAsTable("dw.dim_time")
 # MAGIC   loaded_on TIMESTAMP
 # MAGIC )
 # MAGIC USING parquet
-# MAGIC LOCATION '/mnt/datalake/data/interim/parking_bay/';
+# MAGIC LOCATION '/mnt/datalake/data/malformed/parking_bay/';
 # MAGIC 
-# MAGIC REFRESH TABLE interim.parking_bay;
+# MAGIC REFRESH TABLE malformed.parking_bay;
 # MAGIC 
 # MAGIC --
 # MAGIC DROP TABLE IF EXISTS malformed.sensor;
@@ -212,9 +212,9 @@ dimtime.write.saveAsTable("dw.dim_time")
 # MAGIC   loaded_on TIMESTAMP
 # MAGIC )
 # MAGIC USING parquet
-# MAGIC LOCATION '/mnt/datalake/data/interim/sensors/';
+# MAGIC LOCATION '/mnt/datalake/data/malformed/sensors/';
 # MAGIC 
-# MAGIC REFRESH TABLE interim.sensor;
+# MAGIC REFRESH TABLE malformed.sensor;
 
 # COMMAND ----------
 
